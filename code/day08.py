@@ -12,11 +12,11 @@ with open(path) as f:
 ops = { "+": operator.add, "-": operator.sub }
 
 def partA(data:list) -> int:
-    freq = {i:0 for i in range(len(data))}
+    visited = {i:False for i in range(len(data))}
     pos = 0
     acc =  0
-    while max(freq.values()) < 2:
-        
+    while not visited[pos]:
+        visited[pos] = True
         curr_act, opp = data[pos]
         op = opp[0]
         val = int(opp[1:])
@@ -28,7 +28,7 @@ def partA(data:list) -> int:
         elif curr_act == 'acc':
             pos +=1
             acc = ops[op](acc,val)
-        freq[pos] += 1
+        
 
     return acc
 
@@ -63,6 +63,48 @@ def partB(data:list):
                 pos +=1
                 acc = ops[op](acc,val)
 
+def partBrecur(data:list, visited:dict, pos:int, acc:int, switch:bool):
+    
+    while pos < len(data) and not visited[pos]:
+        visited[pos] = True
+        curr_act, opp = data[pos]
+        op = opp[0]
+        val = int(opp[1:])
+        if switch:
+            if curr_act == 'nop':
+                pos += 1
+            elif curr_act == 'jmp':
+                pos = ops[op](pos, val)
+            elif curr_act == 'acc':
+                pos +=1
+                acc = ops[op](acc,val)
+        else:
+            if curr_act == 'nop':
+                failsnop = partBrecur(data, visited,pos+1,acc, False)
+                failsjmp = partBrecur(data, visited,ops[op](pos, val),acc, True)
+                if failsjmp is not None:
+                    return failsjmp
+                elif failsnop is not None:
+                    return failsnop
+                else:
+                    return None
+            elif curr_act == 'jmp':
+                failsjmp = partBrecur(data, visited,ops[op](pos, val),acc, False)
+                failsnop = partBrecur(data, visited,pos+1,acc, True)
+                if failsjmp is not None:
+                    return failsjmp
+                elif failsnop is not None:
+                    return failsnop
+                else:
+                    return None
+            elif curr_act == 'acc':
+                pos +=1
+                acc = ops[op](acc,val)
+
+    if pos >= len(data):
+        return acc
+    else:
+        return None
 
 
 
@@ -73,7 +115,7 @@ if __name__ == "__main__":
     print('Time: ', end-start)
     print('='*20)
     start = time.time()
-    print('PART B: ', partB(intcode))
+    print('PART B: ', partBrecur(intcode, {i:False for i in range(len(intcode))}, 0, 0, False))
     end = time.time()
     print('Time: ', end-start)
     

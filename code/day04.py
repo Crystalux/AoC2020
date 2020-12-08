@@ -27,13 +27,16 @@ with open(path) as f1:
 
 df = passports.copy(deep=True)
 df = df.drop('cid', axis=1)
+#change datatype of ['byr','iyr','eyr'] to float64
+#Cannot do int as value cannot be replaced with np.nan
 df[['byr','iyr','eyr']] = df[['byr','iyr','eyr']].astype('float64')
 
 def partA():
     return df.dropna().shape[0]
 
 def partB():
-    dfcopy = df.copy(deep=True)
+    #work with partA valid rows
+    dfcopy = df.dropna(axis=0)
     #separating height digit from measure
     heights = pd.DataFrame()
     heights= dfcopy['hgt'].str.split(r"(\d+)([A-Za-z]+)", expand=True)
@@ -44,41 +47,40 @@ def partB():
     dfcopy['height'] = pd.to_numeric(dfcopy["height"])
 
     for index, row in dfcopy.iterrows():
-        if pd.notnull(row['byr']):
-            if (row['byr']<1920 or row['byr']>2020):
-                dfcopy.loc[index, 'byr'] = np.nan
-        if pd.notnull(row['iyr']):
-            if (row['iyr']<2010 or row['iyr']>2020):
-                dfcopy.loc[index, 'iyr'] = np.nan
-
-        if pd.notnull(row['eyr']):
-            if (row['eyr']<2020 or row['eyr']>2030):
-                dfcopy.loc[index, 'eyr'] = np.nan
-
-        if pd.notnull(row['UoM']):
-            if (row['UoM']=='cm'):
-                if (row['height']<150 or row['height']>193):
-                    dfcopy.loc[index, 'height'] = np.nan
-                    dfcopy.loc[index, 'UoM'] = np.nan
-            if (row['UoM']=='in'):
-                if (row['height']<59 or row['height']>76):
-                    dfcopy.loc[index, 'height'] = np.nan
-                    dfcopy.loc[index, 'UoM'] = np.nan
-
-        if pd.notnull(row['ecl']):
-            if not(row['ecl'] in ['amb', 'blu', 'brn', 'gry', 'grn', 'hzl', 'oth']):
-                dfcopy.loc[index, 'ecl'] = np.nan
-
-        if pd.notnull(row['hcl']):
-            if not(row['hcl'][0]=='#' and len(row['hcl'][1:])==6 and re.match('^[a-fA-F0-9_]+$', row['hcl'][1:])):
-                dfcopy.loc[index, 'hcl'] = np.nan
         
-        if pd.notnull(row['pid']):
-            if not((len(str(row['pid']))==9) and (str(row['pid']).isnumeric())): 
-                dfcopy.loc[index, 'pid'] = np.nan
+        if (row['byr']<1920 or row['byr']>2020):
+            dfcopy.loc[index, 'byr'] = np.nan
+        
+        if (row['iyr']<2010 or row['iyr']>2020):
+            dfcopy.loc[index, 'iyr'] = np.nan
+
+        if (row['eyr']<2020 or row['eyr']>2030):
+            dfcopy.loc[index, 'eyr'] = np.nan
 
 
-    return dfcopy.dropna().shape[0]
+        if (row['UoM']=='cm'):
+            if (row['height']<150 or row['height']>193):
+                dfcopy.loc[index, 'height'] = np.nan
+                dfcopy.loc[index, 'UoM'] = np.nan
+        if (row['UoM']=='in'):
+            if (row['height']<59 or row['height']>76):
+                dfcopy.loc[index, 'height'] = np.nan
+                dfcopy.loc[index, 'UoM'] = np.nan
+
+
+        if not(row['ecl'] in ['amb', 'blu', 'brn', 'gry', 'grn', 'hzl', 'oth']):
+            dfcopy.loc[index, 'ecl'] = np.nan
+
+        if not(row['hcl'][0]=='#' and len(row['hcl'][1:])==6 and re.match('^[a-fA-F0-9_]+$', row['hcl'][1:])):
+            dfcopy.loc[index, 'hcl'] = np.nan
+        
+        if not((len(str(row['pid']))==9) and (str(row['pid']).isnumeric())): 
+            dfcopy.loc[index, 'pid'] = np.nan
+    
+    dfcopy = dfcopy.dropna()
+
+
+    return dfcopy.shape[0]
 
 
 if __name__ == "__main__":
